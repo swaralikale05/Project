@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theory: Jacobian Matrix - Virtual Labs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Back to Dashboard Link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+        .back-link:hover {
+            color: #2980b9;
+        }
+
+        /* Card Layout */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 35px;
+            border-top: 5px solid #3498db;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 26px;
+        }
+        h2 i { color: #3498db; }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        h3 {
+            color: #2c3e50;
+            margin: 25px 0 12px 0;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        p {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-align: justify;
+        }
+
+        /* Mathematical Notation Box */
+        .math-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            font-family: 'Cambria Math', 'Times New Roman', Times, serif;
+            font-size: 19px;
+            color: #1a202c;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .matrix-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .brackets {
+            font-size: 50px;
+            font-weight: 100;
+            color: #2c3e50;
+            line-height: 1;
+            transform: scaleY(1.1);
+        }
+
+        .matrix-content {
+            display: inline-grid;
+            grid-template-columns: auto auto;
+            gap: 15px 25px;
+            text-align: center;
+            font-size: 18px;
+            padding: 0 5px;
+        }
+
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 1;
+            padding: 2px 0;
+        }
+        .numerator { border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .denominator { padding-top: 3px; }
+
+        /* Step List Styling */
+        .steps-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .steps-list li {
+            position: relative;
+            padding-left: 45px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #4a5568;
+        }
+
+        .steps-list li::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 26px;
+            height: 26px;
