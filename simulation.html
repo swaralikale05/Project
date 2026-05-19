@@ -233,9 +233,14 @@
             currentI = 0; currentJ = 0; currentChances = 3;
             currentStep = 'functions';
             
+            // Clear out any old log text from previous games
             document.getElementById('log-text').innerHTML = "[STATUS] Virtual matrix system context initialized successfully.\n";
-            document.getElementById('setup-panel').style.display = 'none';
-            document.getElementById('game-panel').style.display = 'block';
+            
+            // --- CRITICAL FIX: SWAP PANEL VISIBILITY ---
+            document.getElementById('setup-panel').style.display = 'none'; // Hides the config boxes
+            document.getElementById('game-panel').style.display = 'block'; // Shows the game input text area & logs box
+            // --------------------------------------------
+            
             updateScore(0);
 
             document.getElementById('submit-game-btn').onclick = handleGameSubmit;
