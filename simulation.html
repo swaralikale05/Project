@@ -233,14 +233,9 @@
             currentI = 0; currentJ = 0; currentChances = 3;
             currentStep = 'functions';
             
-            // Clear out any old log text from previous games
             document.getElementById('log-text').innerHTML = "[STATUS] Virtual matrix system context initialized successfully.\n";
-            
-            // --- CRITICAL FIX: SWAP PANEL VISIBILITY ---
-            document.getElementById('setup-panel').style.display = 'none'; // Hides the config boxes
-            document.getElementById('game-panel').style.display = 'block'; // Shows the game input text area & logs box
-            // --------------------------------------------
-            
+            document.getElementById('setup-panel').style.display = 'none';
+            document.getElementById('game-panel').style.display = 'block';
             updateScore(0);
 
             document.getElementById('submit-game-btn').onclick = handleGameSubmit;
@@ -320,16 +315,7 @@
             }
 
             // STEP 4: OPTIONAL NUMERICAL VALUE SUBSTITUTION
-         else if (currentStep === 'substitution') {
-                // 1. ALWAYS SHOW THE SYMBOLIC JACOBIAN MATRIX FIRST
-                let matrixString = "\n=== FINAL JACOBIAN MATRIX ===\n";
-                for (let i = 0; i < totalVars; i++) {
-                    let rowStrings = computedJacobian[i].map(cell => cell.toString());
-                    matrixString += `[  ${rowStrings.join("  ,  ")}  ]\n`;
-                }
-                updateLog(matrixString);
-
-                // 2. PROCESS OPTIONAL SUBSTITUTION
+            else if (currentStep === 'substitution') {
                 if (value.toLowerCase() === 'yes') {
                     let scopeValues = {};
                     for (let i = 0; i < totalVars; i++) {
@@ -340,12 +326,7 @@
                     let numMatrix = computedJacobian.map(r => r.map(c => c.evaluate(scopeValues)));
                     let finalDet = math.det(numMatrix);
                     
-                    // Format the numerical matrix row by row for the terminal log box
-                    let numMatrixString = "\n=== NUMERICAL MATRIX ===\n";
-                    for (let i = 0; i < totalVars; i++) {
-                        numMatrixString += `[  ${numMatrix[i].join("  ,  ")}  ]\n`;
-                    }
-                    updateLog(numMatrixString);
+                    updateLog(`\n=== PROCESSOR INSTANTIATED NUMERICAL MATRIX ===\n${math.format(numMatrix)}`);
                     updateLog(`Calculated Scalar Jacobian Space Transformation Determinant: ${finalDet}`);
                     updateScore(10);
                 }
@@ -353,7 +334,8 @@
                 document.getElementById('game-instructions').innerText = `Calculation processing context cycle complete termination verified.`;
                 updateLog(`\n[COMPLETE] Lab Evaluation Terminal Sequence Closed. Aggregated Session Points: ${gameScore}`);
                 document.getElementById('setup-panel').style.display = 'block'; 
-            }    
+            }
+        }
 
         function setupDerivativeStep() {
             currentChances = 3;
@@ -413,4 +395,3 @@
     </script>
 </body>
 </html>
-
