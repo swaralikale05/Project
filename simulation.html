@@ -1,1 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jacobian Simulator - Virtual Labs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Back to Dashboard Button */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+        .back-link:hover {
+            color: #2980b9;
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            border-top: 5px solid #3498db;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h2 i { color: #3498db; }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            font-size: 15px;
+        }
+
+        /* Config Box */
+        .sim-box {
+            background: #fdfefe;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 6px;
+        }
+
+        .sim-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+        .sim-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .sim-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+        }
+        .sim-btn:hover { 
+            background: linear-gradient(135deg, #2980b9, #216794); 
+        }
+
+        /* Active Game Environment */
+        .score-badge {
+            background-color: #2ecc71;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .instruction-box {
+            background-color: #ebf5fb;
+            padding: 18px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .input-row .sim-input { margin-bottom: 0; }
+
+        /* Terminal Execution Output Log */
+        .log-box {
+            background: #1a202c;
+            color: #cbd5e1;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .log-box strong { color: #a0aec0; display: block; margin-bottom: 8px; font-size: 13px;}
+        #log-text { color: #f8fafc; white-space: pre-line; font-size: 14px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="project.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Return to Main Lab Dashboard
+        </a>
+
+        <div class="card">
+            <h2><i class="fas fa-desktop"></i> Jacobian Matrix Lab Simulator</h2>
+            <p class="subtitle">Applied Sciences & Humanities Department | PCCOE</p>
+            
+            <div id="setup-panel" class="sim-box">
+                <label for="matrix-n">Number of Variables / Functions (n):</label>
+                <input type="number" id="matrix-n" min="1" max="4" value="2" class="sim-input">
+                
+                <label for="matrix-vars">Variable Systems Names (space-separated):</label>
+                <input type="text" id="matrix-vars" value="x y" class="sim-input">
+                
+                <button onclick="startVisualSimulation()" class="sim-btn">
+                    <i class="fas fa-play"></i> Initialize Matrix Space
+                </button>
+            </div>
+
+            <div id="game-panel" style="display: none;">
+                <div class="score-badge"><i class="fas fa-star"></i> Performance Score: <span id="current-score">0</span></div>
+                <div id="game-instructions" class="instruction-box">Awaiting instruction configurations...</div>
+                
+                <div class="input-row">
+                    <input type="text" id="user-game-input" class="sim-input" placeholder="Type structural expression mapping strings here...">
+                    <button id="submit-game-btn" class="sim-btn">Verify Entry</button>
+                </div>
+                
+                <div class="log-box">
+                    <strong>SYSTEM SIMULATION INTERFACE STREAM LOGS:</strong>
+                    <div id="log-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameScore = 0;
+        let totalVars = 0;
+        let variableArray = [];
+        let parsedFunctions = [];
+        let computedJacobian = [];
+        let currentStep = 'functions'; 
+        let currentI = 0, currentJ = 0, currentChances = 3;
+
+        function updateLog(message) {
+            const logBox = document.getElementById('log-text');
+            logBox.innerHTML += message + "\n";
+            logBox.parentElement.scrollTop = logBox.parentElement.scrollHeight;
+        }
+
+        function updateScore(points) {
+            gameScore += points;
+            document.getElementById('current-score').innerText = gameScore;
+        }
+
+        function startVisualSimulation() {
+            totalVars = parseInt(document.getElementById('matrix-n').value);
+            variableArray = document.getElementById('matrix-vars').value.trim().split(/\s+/);
+
+            if (variableArray.length !== totalVars) {
+                alert("Variable count mismatch specified! Please align parameters configuration.");
+                return;
+            }
+
+            gameScore = 0;
+            parsedFunctions = [];
+            computedJacobian = [];
+            currentI = 0; currentJ = 0; currentChances = 3;
+            currentStep = 'functions';
+            
+            document.getElementById('log-text').innerHTML = "[STATUS] Virtual matrix system context initialized successfully.\n";
+            document.getElementById('setup-panel').style.display = 'none';
+            document.getElementById('game-panel').style.display = 'block';
+            updateScore(0);
+
+            document.getElementById('submit-game-btn').onclick = handleGameSubmit;
+            
+            document.getElementById('game-instructions').innerText = `Enter function formula representation f1:`;
+            updateLog(`>> Waiting user expression parameters setup interface definition array data mapping for: f1`);
+        }
+
+        function handleGameSubmit() {
+            let inputField = document.getElementById('user-game-input');
+            let value = inputField.value.trim();
+            if (!value) return;
+            inputField.value = ""; 
+
+            // STEP 1: PARSE AND COLLECT ALL FUNCTIONS
+            if (currentStep === 'functions') {
+                try {
+                    parsedFunctions.push(math.parse(value));
+                    updateLog(`[REGISTERED] Function f${currentI + 1} expression mapping updated -> ${value}`);
+                    currentI++;
+                    
+                    if (currentI < totalVars) {
+                        document.getElementById('game-instructions').innerText = `Enter function formula representation f${currentI + 1}:`;
+                        updateLog(`>> Waiting user expression parameters setup interface definition array data mapping for: f${currentI + 1}`);
+                    } else {
+                        // FIX: Move forward cleanly into derivatives step
+                        currentStep = 'derivatives';
+                        currentI = 0; currentJ = 0;
+                        setupDerivativeStep();
+                    }
+                } catch(e) { alert("Parsing fault structure notation exception. Re-enter formula safely."); }
+            }
+            
+            // STEP 2: VERIFY USER DERIVATIVES STEP-BY-STEP
+            else if (currentStep === 'derivatives') {
+                let actualDerivative = math.derivative(parsedFunctions[currentI], variableArray[currentJ]);
+                try {
+                    let difference = math.simplify(`(${value}) - (${actualDerivative.toString()})`);
+                    if (difference.toString() === '0') {
+                        updateLog(`[SUCCESS] Verified matching evaluate string configuration: Correct Partial Derivative!`);
+                        updateScore(5);
+                        moveToNextDerivative(actualDerivative);
+                    } else {
+                        handleWrongAttempt(actualDerivative.toString());
+                    }
+                } catch(e) { alert("Mathematical formulation matrix error. Retry configuration syntax."); }
+            }
+
+            // STEP 3: ROW BY ROW MATRIX SUBMISSION
+            else if (currentStep === 'rows') {
+                let userRowArr = value.split(/\s+/);
+                let targetRow = computedJacobian[currentI];
+                let rowValid = true;
+
+                if (userRowArr.length !== totalVars) { rowValid = false; }
+                else {
+                    for (let j = 0; j < totalVars; j++) {
+                        let diff = math.simplify(`(${userRowArr[j]}) - (${targetRow[j].toString()})`);
+                        if (diff.toString() !== '0') { rowValid = false; break; }
+                    }
+                }
+
+                if (rowValid) {
+                    updateLog(`[SUCCESS] Jacobian transformation verification validated: Row ${currentI + 1} elements aligned properly.`);
+                    updateScore(10);
+                    currentI++;
+                    if (currentI < totalVars) {
+                        currentChances = 3;
+                        document.getElementById('game-instructions').innerText = `Enter complete transformation row elements ${currentI + 1} parameters (space-separated):`;
+                    } else {
+                        currentStep = 'substitution';
+                        document.getElementById('game-instructions').innerText = `Compute dynamic runtime numerical transformation substitution variants evaluation mappings? (Type 'yes' or 'no')`;
+                    }
+                } else {
+                    handleWrongRowAttempt(targetRow.map(c => c.toString()).join(' '));
+                }
+            }
+
+            // STEP 4: OPTIONAL NUMERICAL VALUE SUBSTITUTION
+            else if (currentStep === 'substitution') {
+                if (value.toLowerCase() === 'yes') {
+                    let scopeValues = {};
+                    for (let i = 0; i < totalVars; i++) {
+                        let num = prompt(`Enter structural parameter float assignment evaluation index reference bound for '${variableArray[i]}':`);
+                        scopeValues[variableArray[i]] = parseFloat(num);
+                    }
+                    
+                    let numMatrix = computedJacobian.map(r => r.map(c => c.evaluate(scopeValues)));
+                    let finalDet = math.det(numMatrix);
+                    
+                    updateLog(`\n=== PROCESSOR INSTANTIATED NUMERICAL MATRIX ===\n${math.format(numMatrix)}`);
+                    updateLog(`Calculated Scalar Jacobian Space Transformation Determinant: ${finalDet}`);
+                    updateScore(10);
+                }
+                
+                document.getElementById('game-instructions').innerText = `Calculation processing context cycle complete termination verified.`;
+                updateLog(`\n[COMPLETE] Lab Evaluation Terminal Sequence Closed. Aggregated Session Points: ${gameScore}`);
+                document.getElementById('setup-panel').style.display = 'block'; 
+            }
+        }
+
+        function setupDerivativeStep() {
+            currentChances = 3;
+            document.getElementById('game-instructions').innerText = `Perform derivative extraction processing logic operations matrix verification mapping: ∂f${currentI + 1} / ∂${variableArray[currentJ]}`;
+        }
+
+        function moveToNextDerivative(derivativeValue) {
+            if (!computedJacobian[currentI]) computedJacobian[currentI] = [];
+            computedJacobian[currentI].push(derivativeValue);
+            
+            currentJ++;
+            if (currentJ >= totalVars) {
+                currentJ = 0;
+                currentI++;
+            }
+            
+            if (currentI < totalVars) {
+                setupDerivativeStep();
+            } else {
+                currentStep = 'rows';
+                currentI = 0;
+                currentChances = 3;
+                document.getElementById('game-instructions').innerText = `Enter complete transformation row elements 1 parameters (space-separated items):`;
+            }
+        }
+
+        function handleWrongAttempt(correctAns) {
+            currentChances--;
+            updateScore(-1);
+            if (currentChances > 0) {
+                updateLog(`[FAULT] Syntax input mapping expression incorrect discrepancy detected. Remaining context window cycles: ${currentChances}`);
+            } else {
+                updateLog(`[TERMINATED] Exhausted target search attempts. Evaluation verification placeholder substitution override solution hint: ${correctAns}`);
+                updateScore(-2); 
+                moveToNextDerivative(math.parse(correctAns));
+            }
+        }
+
+        function handleWrongRowAttempt(correctRowStr) {
+            currentChances--;
+            updateScore(-1);
+            if (currentChances > 0) {
+                updateLog(`[FAULT] Array structural content bounds check mapping failed verification checks. Remaining context window cycles: ${currentChances}`);
+            } else {
+                updateLog(`[TERMINATED] Exhausted target structural line matching checks. Override matrix trace fallback trace alignment layout vector track hint: [ ${correctRowStr} ]`);
+                updateScore(-2);
+                currentI++;
+                if (currentI < totalVars) {
+                    currentChances = 3;
+                    document.getElementById('game-instructions').innerText = `Enter complete transformation row elements ${currentI + 1} parameters (space-separated items):`;
+                } else {
+                    currentStep = 'substitution';
+                    document.getElementById('game-instructions').innerText = `Compute dynamic runtime numerical transformation substitution variants evaluation mappings? (Type 'yes' or 'no')`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
 
