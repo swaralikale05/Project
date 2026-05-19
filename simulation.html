@@ -132,6 +132,33 @@
         }
         .input-row .sim-input { margin-bottom: 0; }
 
+        /* --- VISUAL MATRIX GRID STYLING --- */
+        .matrix-row-layout { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 8px; 
+        }
+        .matrix-cell { 
+            background: #f1f5f9; 
+            border: 2px dashed #cbd5e1; 
+            color: #64748b; 
+            padding: 10px 16px; 
+            min-width: 110px; 
+            text-align: center; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            font-family: 'Courier New', Courier, monospace;
+            transition: all 0.3s ease; 
+        }
+        .matrix-cell.filled { 
+            background: #e0f2fe; 
+            border: 2px solid #3498db; 
+            color: #0369a1; 
+            transform: scale(1.02);
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.15);
+        }
+
         /* Terminal Execution Output Log */
         .log-box {
             background: #1a202c;
@@ -173,6 +200,11 @@
             <div id="game-panel" style="display: none;">
                 <div id="game-instructions" class="instruction-box">Awaiting instruction configurations...</div>
                 
+                <div id="matrix-preview-box" class="sim-box" style="margin-top: 15px; background-color: #fafbfc;">
+                    <label style="margin-bottom: 12px; color: #2c3e50;"><i class="fas fa-th-large"></i> Dynamic Jacobian Matrix Layout:</label>
+                    <div id="visual-matrix-grid" style="display: flex; flex-direction: column; gap: 4px; align-items: center; padding: 10px 0;"></div>
+                </div>
+                
                 <div class="input-row">
                     <input type="text" id="user-game-input" class="sim-input" placeholder="Type structural expression mapping strings here...">
                     <button id="submit-game-btn" class="sim-btn">Verify Entry</button>
@@ -186,196 +218,6 @@
         </div>
     </div>
 
-    <script>
-        let totalVars = 0;
-        let variableArray = [];
-        let parsedFunctions = [];
-        let computedJacobian = [];
-        let currentStep = 'functions'; 
-        let currentI = 0, currentJ = 0, currentChances = 3;
-
-        function updateLog(message) {
-            const logBox = document.getElementById('log-text');
-            logBox.innerHTML += message + "\n";
-            logBox.parentElement.scrollTop = logBox.parentElement.scrollHeight;
-        }
-
-        function startVisualSimulation() {
-            totalVars = parseInt(document.getElementById('matrix-n').value);
-            variableArray = document.getElementById('matrix-vars').value.trim().split(/\s+/);
-
-            if (variableArray.length !== totalVars) {
-                alert("Variable count mismatch specified! Please align parameters configuration.");
-                return;
-            }
-
-            parsedFunctions = [];
-            computedJacobian = [];
-            currentI = 0; currentJ = 0; currentChances = 3;
-            currentStep = 'functions';
-            
-            document.getElementById('log-text').innerHTML = "[STATUS] Virtual matrix system context initialized successfully.\n";
-            document.getElementById('setup-panel').style.display = 'none';
-            document.getElementById('game-panel').style.display = 'block';
-
-            document.getElementById('submit-game-btn').onclick = handleGameSubmit;
-            
-            document.getElementById('game-instructions').innerText = `Enter function formula representation f1:`;
-            updateLog(`>> Waiting user expression parameters setup interface definition array data mapping for: f1`);
-        }
-
-        function handleGameSubmit() {
-            let inputField = document.getElementById('user-game-input');
-            let value = inputField.value.trim();
-            if (!value) return;
-            inputField.value = ""; 
-
-            // STEP 1: PARSE AND COLLECT ALL FUNCTIONS
-            if (currentStep === 'functions') {
-                try {
-                    parsedFunctions.push(math.parse(value));
-                    updateLog(`[REGISTERED] Function f${currentI + 1} expression mapping updated -> ${value}`);
-                    currentI++;
-                    
-                    if (currentI < totalVars) {
-                        document.getElementById('game-instructions').innerText = `Enter function formula representation f${currentI + 1}:`;
-                        updateLog(`>> Waiting user expression parameters setup interface definition array data mapping for: f${currentI + 1}`);
-                    } else {
-                        currentStep = 'derivatives';
-                        currentI = 0; currentJ = 0;
-                        setupDerivativeStep();
-                    }
-                } catch(e) { alert("Parsing fault structure notation exception. Re-enter formula safely."); }
-            }
-            
-            // STEP 2: VERIFY USER DERIVATIVES STEP-BY-STEP
-            else if (currentStep === 'derivatives') {
-                let actualDerivative = math.derivative(parsedFunctions[currentI], variableArray[currentJ]);
-                try {
-                    let difference = math.simplify(`(${value}) - (${actualDerivative.toString()})`);
-                    if (difference.toString() === '0') {
-                        updateLog(`[SUCCESS] Verified matching evaluate string configuration: Correct Partial Derivative!`);
-                        moveToNextDerivative(actualDerivative);
-                    } else {
-                        handleWrongAttempt(actualDerivative.toString());
-                    }
-                } catch(e) { alert("Mathematical formulation matrix error. Retry configuration syntax."); }
-            }
-
-            // STEP 3: ROW BY ROW MATRIX SUBMISSION
-            else if (currentStep === 'rows') {
-                let userRowArr = value.split(/\s+/);
-                let targetRow = computedJacobian[currentI];
-                let rowValid = true;
-
-                if (userRowArr.length !== totalVars) { rowValid = false; }
-                else {
-                    for (let j = 0; j < totalVars; j++) {
-                        let diff = math.simplify(`(${userRowArr[j]}) - (${targetRow[j].toString()})`);
-                        if (diff.toString() !== '0') { rowValid = false; break; }
-                    }
-                }
-
-                if (rowValid) {
-                    updateLog(`[SUCCESS] Jacobian transformation verification validated: Row ${currentI + 1} elements aligned properly.`);
-                    currentI++;
-                    if (currentI < totalVars) {
-                        currentChances = 3;
-                        document.getElementById('game-instructions').innerText = `Enter complete transformation row elements ${currentI + 1} parameters (space-separated):`;
-                    } else {
-                        currentStep = 'substitution';
-                        document.getElementById('game-instructions').innerText = `Compute dynamic runtime numerical transformation substitution variants evaluation mappings? (Type 'yes' or 'no')`;
-                    }
-                } else {
-                    handleWrongRowAttempt(targetRow.map(c => c.toString()).join(' '));
-                }
-            }
-
-            // STEP 4: OPTIONAL NUMERICAL VALUE SUBSTITUTION
-            else if (currentStep === 'substitution') {
-                // ALWAYS SHOW THE SYMBOLIC JACOBIAN MATRIX FIRST
-                let matrixString = "\n=== FINAL JACOBIAN MATRIX ===\n";
-                for (let i = 0; i < totalVars; i++) {
-                    let rowStrings = computedJacobian[i].map(cell => cell.toString());
-                    matrixString += `[  ${rowStrings.join("  ,  ")}  ]\n`;
-                }
-                updateLog(matrixString);
-
-                if (value.toLowerCase() === 'yes') {
-                    let scopeValues = {};
-                    for (let i = 0; i < totalVars; i++) {
-                        let num = prompt(`Enter structural parameter float assignment evaluation index reference bound for '${variableArray[i]}':`);
-                        scopeValues[variableArray[i]] = parseFloat(num);
-                    }
-                    
-                    let numMatrix = computedJacobian.map(r => r.map(c => c.evaluate(scopeValues)));
-                    let finalDet = math.det(numMatrix);
-                    
-                    let numMatrixString = "\n=== NUMERICAL MATRIX ===\n";
-                    for (let i = 0; i < totalVars; i++) {
-                        numMatrixString += `[  ${numMatrix[i].join("  ,  ")}  ]\n`;
-                    }
-                    updateLog(numMatrixString);
-                    updateLog(`Calculated Scalar Jacobian Space Transformation Determinant: ${finalDet}`);
-                }
-                
-                document.getElementById('game-instructions').innerText = `Calculation processing context cycle complete termination verified.`;
-                updateLog(`\n[COMPLETE] Lab Evaluation Terminal Sequence Closed.`);
-                document.getElementById('setup-panel').style.display = 'block'; 
-            }
-        }
-
-        function setupDerivativeStep() {
-            currentChances = 3;
-            document.getElementById('game-instructions').innerText = `Perform derivative extraction processing logic operations matrix verification mapping: ∂f${currentI + 1} / ∂${variableArray[currentJ]}`;
-        }
-
-        function moveToNextDerivative(derivativeValue) {
-            if (!computedJacobian[currentI]) computedJacobian[currentI] = [];
-            computedJacobian[currentI].push(derivativeValue);
-            
-            currentJ++;
-            if (currentJ >= totalVars) {
-                currentJ = 0;
-                currentI++;
-            }
-            
-            if (currentI < totalVars) {
-                setupDerivativeStep();
-            } else {
-                currentStep = 'rows';
-                currentI = 0;
-                currentChances = 3;
-                document.getElementById('game-instructions').innerText = `Enter complete transformation row elements 1 parameters (space-separated items):`;
-            }
-        }
-
-        function handleWrongAttempt(correctAns) {
-            currentChances--;
-            if (currentChances > 0) {
-                updateLog(`[FAULT] Syntax input mapping expression incorrect discrepancy detected. Remaining context window cycles: ${currentChances}`);
-            } else {
-                updateLog(`[TERMINATED] Exhausted target search attempts. Evaluation verification placeholder substitution override solution hint: ${correctAns}`);
-                moveToNextDerivative(math.parse(correctAns));
-            }
-        }
-
-        function handleWrongRowAttempt(correctRowStr) {
-            currentChances--;
-            if (currentChances > 0) {
-                updateLog(`[FAULT] Array structural content bounds check mapping failed verification checks. Remaining context window cycles: ${currentChances}`);
-            } else {
-                updateLog(`[TERMINATED] Exhausted target structural line matching checks. Override matrix trace fallback trace alignment layout vector track hint: [ ${correctRowStr} ]`);
-                currentI++;
-                if (currentI < totalVars) {
-                    currentChances = 3;
-                    document.getElementById('game-instructions').innerText = `Enter complete transformation row elements ${currentI + 1} parameters (space-separated items):`;
-                } else {
-                    currentStep = 'substitution';
-                    document.getElementById('game-instructions').innerText = `Compute dynamic runtime numerical transformation substitution variants evaluation mappings? (Type 'yes' or 'no')`;
-                }
-            }
-        }
-    </script>
+    <script src="simulation.js"></script>
 </body>
 </html>
