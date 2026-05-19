@@ -114,17 +114,6 @@
         }
 
         /* Active Game Environment */
-        .score-badge {
-            background-color: #2ecc71;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            display: inline-block;
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-
         .instruction-box {
             background-color: #ebf5fb;
             padding: 18px;
@@ -182,7 +171,6 @@
             </div>
 
             <div id="game-panel" style="display: none;">
-                <div class="score-badge"><i class="fas fa-star"></i> Performance Score: <span id="current-score">0</span></div>
                 <div id="game-instructions" class="instruction-box">Awaiting instruction configurations...</div>
                 
                 <div class="input-row">
@@ -199,7 +187,6 @@
     </div>
 
     <script>
-        let gameScore = 0;
         let totalVars = 0;
         let variableArray = [];
         let parsedFunctions = [];
@@ -213,11 +200,6 @@
             logBox.parentElement.scrollTop = logBox.parentElement.scrollHeight;
         }
 
-        function updateScore(points) {
-            gameScore += points;
-            document.getElementById('current-score').innerText = gameScore;
-        }
-
         function startVisualSimulation() {
             totalVars = parseInt(document.getElementById('matrix-n').value);
             variableArray = document.getElementById('matrix-vars').value.trim().split(/\s+/);
@@ -227,7 +209,6 @@
                 return;
             }
 
-            gameScore = 0;
             parsedFunctions = [];
             computedJacobian = [];
             currentI = 0; currentJ = 0; currentChances = 3;
@@ -236,7 +217,6 @@
             document.getElementById('log-text').innerHTML = "[STATUS] Virtual matrix system context initialized successfully.\n";
             document.getElementById('setup-panel').style.display = 'none';
             document.getElementById('game-panel').style.display = 'block';
-            updateScore(0);
 
             document.getElementById('submit-game-btn').onclick = handleGameSubmit;
             
@@ -261,7 +241,6 @@
                         document.getElementById('game-instructions').innerText = `Enter function formula representation f${currentI + 1}:`;
                         updateLog(`>> Waiting user expression parameters setup interface definition array data mapping for: f${currentI + 1}`);
                     } else {
-                        // FIX: Move forward cleanly into derivatives step
                         currentStep = 'derivatives';
                         currentI = 0; currentJ = 0;
                         setupDerivativeStep();
@@ -276,7 +255,6 @@
                     let difference = math.simplify(`(${value}) - (${actualDerivative.toString()})`);
                     if (difference.toString() === '0') {
                         updateLog(`[SUCCESS] Verified matching evaluate string configuration: Correct Partial Derivative!`);
-                        updateScore(5);
                         moveToNextDerivative(actualDerivative);
                     } else {
                         handleWrongAttempt(actualDerivative.toString());
@@ -300,7 +278,6 @@
 
                 if (rowValid) {
                     updateLog(`[SUCCESS] Jacobian transformation verification validated: Row ${currentI + 1} elements aligned properly.`);
-                    updateScore(10);
                     currentI++;
                     if (currentI < totalVars) {
                         currentChances = 3;
@@ -316,6 +293,14 @@
 
             // STEP 4: OPTIONAL NUMERICAL VALUE SUBSTITUTION
             else if (currentStep === 'substitution') {
+                // ALWAYS SHOW THE SYMBOLIC JACOBIAN MATRIX FIRST
+                let matrixString = "\n=== FINAL JACOBIAN MATRIX ===\n";
+                for (let i = 0; i < totalVars; i++) {
+                    let rowStrings = computedJacobian[i].map(cell => cell.toString());
+                    matrixString += `[  ${rowStrings.join("  ,  ")}  ]\n`;
+                }
+                updateLog(matrixString);
+
                 if (value.toLowerCase() === 'yes') {
                     let scopeValues = {};
                     for (let i = 0; i < totalVars; i++) {
@@ -326,13 +311,16 @@
                     let numMatrix = computedJacobian.map(r => r.map(c => c.evaluate(scopeValues)));
                     let finalDet = math.det(numMatrix);
                     
-                    updateLog(`\n=== PROCESSOR INSTANTIATED NUMERICAL MATRIX ===\n${math.format(numMatrix)}`);
+                    let numMatrixString = "\n=== NUMERICAL MATRIX ===\n";
+                    for (let i = 0; i < totalVars; i++) {
+                        numMatrixString += `[  ${numMatrix[i].join("  ,  ")}  ]\n`;
+                    }
+                    updateLog(numMatrixString);
                     updateLog(`Calculated Scalar Jacobian Space Transformation Determinant: ${finalDet}`);
-                    updateScore(10);
                 }
                 
                 document.getElementById('game-instructions').innerText = `Calculation processing context cycle complete termination verified.`;
-                updateLog(`\n[COMPLETE] Lab Evaluation Terminal Sequence Closed. Aggregated Session Points: ${gameScore}`);
+                updateLog(`\n[COMPLETE] Lab Evaluation Terminal Sequence Closed.`);
                 document.getElementById('setup-panel').style.display = 'block'; 
             }
         }
@@ -364,24 +352,20 @@
 
         function handleWrongAttempt(correctAns) {
             currentChances--;
-            updateScore(-1);
             if (currentChances > 0) {
                 updateLog(`[FAULT] Syntax input mapping expression incorrect discrepancy detected. Remaining context window cycles: ${currentChances}`);
             } else {
                 updateLog(`[TERMINATED] Exhausted target search attempts. Evaluation verification placeholder substitution override solution hint: ${correctAns}`);
-                updateScore(-2); 
                 moveToNextDerivative(math.parse(correctAns));
             }
         }
 
         function handleWrongRowAttempt(correctRowStr) {
             currentChances--;
-            updateScore(-1);
             if (currentChances > 0) {
                 updateLog(`[FAULT] Array structural content bounds check mapping failed verification checks. Remaining context window cycles: ${currentChances}`);
             } else {
                 updateLog(`[TERMINATED] Exhausted target structural line matching checks. Override matrix trace fallback trace alignment layout vector track hint: [ ${correctRowStr} ]`);
-                updateScore(-2);
                 currentI++;
                 if (currentI < totalVars) {
                     currentChances = 3;
